@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <title>  </title>
+</head>
+<body class="text-white">
+
+<div class="grid grid-cols-8">
+    <div class="col-span-2 bg-slate-50 text-zinc-900">
+        <nav>
+            <div class="bg-indigo-900 mb-4 border-b border-slate-900">
+                <h1 class="text-4xl text-underline-offset text-yellow-400 font-bold p-4">
+                    <a href="{% url 'index' %}">Fowsio</a>
+                </h1>
+            </div>
+            <ul class="px-2">
+
+                <li>
+                    <a href="{% url 'ini-fw-auto' %}">
+                                                <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Firewall Tools
+</span>
+</button>
+                    </a>
+                </li>
+
+                 <li>
+                    <a href="#">
+                                                <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+IOS Upgrade Tool
+</span>
+</button>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Routers
+</span>
+</button>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'switches' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Switches
+</span>
+</button>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Firewalls
+</span>
+</button>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'int-descriptions' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Interface Description Tool
+</span>
+</button>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'ios-upgrade' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+IOS Upgrade Tool
+</span>
+</button>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+        </div>
+    {% block content %}
+
+{% endblock %}
+    </div>
+
+</body>
+</html>
