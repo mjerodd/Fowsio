@@ -9,6 +9,7 @@ from nornir_netmiko.tasks import netmiko_send_config, netmiko_send_command, netm
 from nornir_utils.plugins.functions import print_result
 from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
+from .tasks import fw_upgrade
 # Create your views here.
 
 def switches(request):
@@ -229,10 +230,7 @@ def fw_os_auto(request):
             target_list = target.split(',')
             print(target_list)
 
-            for fw in target_list:
-                print(fw)
-                cf = ChurchFirewall(fw)
-                cf.os_update(fw_ver)
+            fw_upgrade(target_list, fw_ver)
 
             #except Exception as e:
             #   print("Error: ", e)

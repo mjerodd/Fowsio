@@ -1,0 +1,42 @@
+<html>
+
+<div class="col-span-6">
+
+
+    <main class="px-16 py-6 bg-slate-900 shadow-xl">
+        <div class="flex justify-end">
+            <a href="">Login</a>
+            <a class="ml-3" href="">Sign Up</a>
+        </div>
+        <header class="flex justify-items">
+
+            <h2 class="text-white text-6xl font-semibold"></h2>
+
+
+
+        </header>
+
+        <div class="shadow-lg text-black px-1 bg-white border border-sky-400 rounded-lg px-16 py-6 mt-8">
+
+
+<form class="max-w-sm mx-auto" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+  <div class="mb-5">
+    <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.firewall_ip.label}}</label>
+      {{form.firewall_ip}}
+  </div>
+    <br>
+<div class="mb-5">
+    <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.version.label}}</label>
+      {{form.version}}
+  </div>
+    <br>
+  <button type="submit" class="text-white bg-sky-400 hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Upgrade</button>
+</form>
+
+
+            </div>
+        </main>
+        </div>
+</html>
+{% endblock %}
