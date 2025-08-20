@@ -4,6 +4,7 @@
 
     {% block content %}
 
+
 <div class="col-span-6">
 
 
@@ -26,21 +27,26 @@
 <form class="max-w-sm mx-auto" method="post" enctype="multipart/form-data">
     {% csrf_token %}
   <div class="mb-5">
-    <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.site_id.label}}</label>
-      {{form.site_id}}
-  </div>
-
-  <div class="mb-5">
     <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.subnet.label}}</label>
       {{form.subnet}}
   </div>
-
-  <button type="submit" class="text-white bg-sky-400 hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Apply Descriptions</button>
+    <br>
+<div class="mb-5">
+    <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.site_id.label}}</label>
+      {{form.site_id}}
+  </div>
+    <br>
+    <div class="mb-5">
+    <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">{{form.logging_srv.label}}</label>
+      {{form.logging_srv}}
+  </div>
+    <br>
+  <button type="submit" class="text-white bg-sky-400 hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Generate</button>
 </form>
 
 
             </div>
         </main>
         </div>
-
+</html>
 {% endblock %}

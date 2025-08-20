@@ -41,7 +41,7 @@ class CoreTempForm(forms.Form):
 
 class IntDescriptionForm(forms.Form):
     site_id = forms.CharField()
-    mgmt_subnet = forms.GenericIPAddressField()
+    subnet = forms.CharField(max_length=30)
 
 
 class IosUpgradeForm(forms.Form):
@@ -56,3 +56,8 @@ class PaloForm(forms.Form):
 class PaloOsUpgradeForm(forms.Form):
     firewall_ip = forms.CharField(label="Enter each IP to be upgraded", widget=forms.Textarea)
     version = forms.CharField(max_length=20, label="Code Version")
+
+class CoreSwitchConfForm(forms.Form):
+    subnet = forms.CharField(max_length=20, label="Site Mgmt subnet")
+    site_id = forms.CharField(max_length=3)
+    logging_srv = forms.CharField(max_length=20, label="Site Logging Server")

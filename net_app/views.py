@@ -1,15 +1,18 @@
+import jinja2
 from django.shortcuts import render, redirect
 from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm
 from .models import Switch, Router, Firewall
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from .forms import CoreTempForm, IntDescriptionForm, IosUpgradeForm, PaloForm, PaloOsUpgradeForm
+from .forms import CoreTempForm, IntDescriptionForm, IosUpgradeForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm
 from nornir import InitNornir
 from nornir_netmiko.tasks import netmiko_send_config, netmiko_send_command, netmiko_file_transfer
 from nornir_utils.plugins.functions import print_result
 from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
-from .tasks import fw_upgrade
+from .tasks import fw_upgrade, get_ints, port_scan
+import zipfile
+from io import BytesIO
 # Create your views here.
 
 def switches(request):
@@ -92,21 +95,6 @@ def send_to_switch(task):
     except OSError:
         print(f"File Transfer for {task.host} Complete")
 
-
-def get_ints(task):
-    cdp_result = task.run(task=netmiko_send_command, command_string="show cdp neighbor", use_textfsm=True)
-    task.host["facts"] = cdp_result.result
-    print(task.host["facts"])
-
-    for fact in task.host["facts"]:
-        if fact['platform'] == "IP Phone":
-            continue
-        neighbor = fact['neighbor']
-        loc_int = fact['local_interface']
-        rem_int = fact['neighbor_interface']
-        task.run(task=netmiko_send_config, config_commands=[f"int {loc_int}", f"description {neighbor} - {rem_int}"])
-
-
 def nex_conf(task):
     template = task.run(task=template_file, template="nx_template.j2", path="/app/net_app/yaml_files/config.yaml")
     task.host["stage_conf"] = template.result
@@ -121,41 +109,74 @@ def nex_conf(task):
 def core_ip(subnet):
     ip_add = subnet
     split_ip = ip_add.split(".")
-    split_ip[3] = "31"
+    vpc_oct = split_ip[2]
+    split_ip[3] = "131"
     core1_ip = ".".join(split_ip)
-    split_ip[3] = "32"
+    split_ip[3] = "132"
     core2_ip = ".".join(split_ip)
     split_ip[3] = "254"
     core_gw = ".".join(split_ip)
-    return [core1_ip, core2_ip, core_gw]
+    return [core1_ip, core2_ip, core_gw, vpc_oct]
 
 
 def core_temp(request):
     if request.method == 'POST':
-        '''
-        form = CoreTempForm(request.POST)
+
+        form = CoreSwitchConfForm(request.POST)
 
         if form.is_valid():
             print(form.cleaned_data)
+            print(type(form.cleaned_data['subnet']))
+            cor_ips = core_ip(form.cleaned_data['subnet'])
+            switch1 = {
+                "site_id" : form.cleaned_data['site_id'],
+                "switch_num": "01",
+                "mgmt_gw": cor_ips[2],
+                "vpc_oct":cor_ips[3],
+                "mgmt_ip": cor_ips[0],
+                "logging_srv": form.cleaned_data['logging_srv'],
+            }
 
-            cor_ips = core_ip(form.cleaned_data['mgmt_subnet'])
-            cores_dict[0]["data"]["mgmt_ip"] = cor_ips[0]
-            cores_dict[1]["data"]["mgmt_ip"] = cor_ips[1]
-            cores_dict[0]["data"]["mgmt_gw"] = cor_ips[2]
-            cores_dict[1]["data"]["mgmt_gw"] = cor_ips[2]
+            switch2 = {
+                "site_id": form.cleaned_data['site_id'],
+                "switch_num": "02",
+                "mgmt_gw": cor_ips[2],
+                "vpc_oct": cor_ips[3],
+                "mgmt_ip": cor_ips[1],
+                "logging_srv": form.cleaned_data['logging_srv'],
+            }
+            print(cor_ips)
 
-            with open("./net_app/yaml_files/hosts6.yaml", "w") as f:
-                yaml.dump(cores_dict, f)
+
+            with open("./net_app/jinja_templates/nx_template.j2") as data:
+                config = data.read()
+            temp = jinja2.Template(config)
+            switch1_conf = temp.render(switch1)
+            switch2_conf = temp.render(switch2)
+
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+                # Add your text files to the zip
+                zf.writestr(f'core05_{form.cleaned_data["site_id"]}_conf.txt', switch1_conf)
+                zf.writestr(f'core06_{form.cleaned_data["site_id"]}_conf.txt', switch2_conf)
+
+            response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="text_files.zip"'
+            return response
+
             '''
-        nr = InitNornir(
-                config_file="/app/net_app/yaml_files/config.yaml")
-        result = nr.run(task=nex_conf)
-        print_result(result)
-        return redirect("thank-you")
-    else:
-        form = CoreTempForm()
-        context = {"form": form}
-        return render(request, "net_app/core_build.html", context=context)
+            response_sw1 = FileResponse(open(f"core01_{form.cleaned_data['site_id']}_conf.txt", 'rb'))
+            response_sw2 = FileResponse(open(f"core01_{form.cleaned_data['site_id']}_conf.txt", 'rb'))
+            response_sw1['Content-Type'] = 'application/octet-stream'
+            response_sw1['Content-Disposition'] = f'attachment; filename="core01_conf"'
+            response_sw2['Content-Type'] = 'application/octet-stream'
+            response_sw2['Content-Disposition'] = f'attachment; filename="core01_conf"'
+            return response_sw1
+            '''
+
+    form = CoreSwitchConfForm()
+    context = {"form": form}
+    return render(request, "net_app/core_build.html", context=context)
 
 
 def thank_you(request):
@@ -164,11 +185,16 @@ def thank_you(request):
 
 def int_descriptions(request):
     if request.method == 'POST':
-        nr = InitNornir(
-            config_file="/app/net_app/yaml_files/config.yaml")
-        result = nr.run(task=get_ints)
-        print_result(result)
-        return redirect("thank-you")
+        form = IntDescriptionForm(request.POST)
+        if form.is_valid():
+            sub = form.cleaned_data['subnet']
+            scan_list = port_scan.delay(sub)
+            task_result = scan_list.get()
+            for ip in task_result:
+                if ip is not None:
+                    print(ip)
+                    get_ints(ip)
+            return redirect("thank-you")
     else:
         form = IntDescriptionForm()
     return render(request, "net_app/int_description.html", {"form": form})
@@ -230,17 +256,19 @@ def fw_os_auto(request):
             target_list = target.split(',')
             print(target_list)
 
-            fw_upgrade(target_list, fw_ver)
+            result = fw_upgrade.delay(target_list, fw_ver)
 
             #except Exception as e:
             #   print("Error: ", e)
+            context = {'task_id': result.task_id}
 
-            return redirect('index')
+            return render(request, "net_app/fw_os_auto.html", context)
     else:
         form = PaloOsUpgradeForm()
-        context = {'form': form}
-    return render(request, "net_app/firewall_auto.html", context=context)
+        context = {'form': form, 'task_id': None}
+    return render(request, "net_app/fw_os_auto.html", context=context)
 
 
 def fw_tools(request):
     return render(request, "net_app/fw_tools.html")
+

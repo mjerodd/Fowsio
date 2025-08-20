@@ -1,4 +1,9 @@
-<html>
+{% extends 'base.html' %}
+
+{% load static %}
+
+    {% block content %}
+
 
 <div class="col-span-6">
 
@@ -33,9 +38,23 @@
     <br>
   <button type="submit" class="text-white bg-sky-400 hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Upgrade</button>
 </form>
+        <div class='progress-wrapper'>
+  <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+</div>
+            <br>
+            <br>
 
+<div id="progress-bar-message">Waiting for progress to start...</div>
+<script src="{% static 'celery_progress/celery_progress.js' %}"></script>
 
-            </div>
+            // vanilla JS version
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+  CeleryProgressBar.initProgressBar(progressUrl);
+});
+</script>
+        </div>
         </main>
         </div>
 </html>

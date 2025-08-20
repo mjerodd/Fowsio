@@ -24,4 +24,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('account.urls')),
     path('net_devices/', include('net_app.urls')),
+    path('celery-progress/', include('celery_progress.urls'))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

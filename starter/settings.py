@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'account',
     'net_app',
+    'celery_progress',
 ]
 
 AUTH_USER_MODEL = 'account.CustomUser'

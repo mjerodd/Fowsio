@@ -20,8 +20,8 @@ class ChurchFirewall:
              ]
 
     def __init__(self, firewall_ip):
-        self.api_user = env("API_USER")
-        self.api_password = env("API_PASSWORD")
+        self.api_user = "admin"
+        self.api_password = "Marvelou51!"
         self.fw_host = firewall_ip
         self.fw_conn = firewall.Firewall(hostname=self.fw_host, api_username=self.api_user,
                                          api_password=self.api_password)

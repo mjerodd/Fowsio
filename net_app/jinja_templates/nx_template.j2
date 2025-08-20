@@ -1,0 +1,380 @@
+hostname us{{site_id}}sw-core-{{switch_num}}
+vdc us{{site_id}}sw-core-{{switch_num}} id 1
+!
+feature bash-shell
+feature ssh
+feature tacacs+
+cfs distribute
+feature scheduler
+feature pim
+feature interface-vlan
+feature lacp
+feature vpc
+feature lldp
+feature vtp
+clock timezone utc 0 0
+!
+logging level aaa 5
+logging level cdp 6
+logging level interface-vlan 5
+logging level monitor 6
+logging level otm 5
+logging level radius 5
+logging level spanning-tree 6
+logging level tacacs 5
+logging level vpc 6
+banner motd ^
+        __        __               _
+        \ \      / /_ _ _ __ _ __ (_)_ __   __ _
+         \ \ /\ / / _' | '__| '_ \| | '_ \ / _' |
+          \ V  V / (_| | |  | | | | | | | | (_| |
+           \_/\_/ \__,_|_|  |_| |_|_|_| |_|\__, |
+                                           |___/
+
+Unauthorized access to this system is forbidden. Access to
+this system must be authorized and approved by the system
+owner. Access and activities on this system are monitored
+and logged by the system owner. By accessing this system,
+you acknowledge that your actions will be monitored and as
+such can be used in the pursuit and prosecution of criminal
+activities related to this system and or network.
+^
+
+ssh key rsa 2048 force
+no ssh key dsa
+no ssh key ecdsa
+password secure-mode
+ssh login-gracetime 120
+ssh idle-timeout 0 keepalive-count 0
+!
+ip domain-lookup
+ip domain-name infra.chdn.com
+vrf context management
+  ip name-server 172.16.7.250 172.17.0.250
+tacacs-server host 172.16.15.12 key 7 "{{tacacs_key}}" timeout 45
+tacacs-server host 172.17.15.13 key 7 "{{tacacs_key}}" timeout 45
+aaa group server tacacs+ mgmt
+    server 172.16.15.12
+    server 172.17.15.13
+    source-interface mgmt0
+logging event trunk-status default
+service unsupported-transceiver
+errdisable recovery cause link-flap
+errdisable recovery cause bpduguard
+errdisable recovery cause loopback
+errdisable recovery cause storm-control
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery cause vpc-peerlink
+errdisable recovery cause failed-port-state
+errdisable recovery cause vlan-membership
+errdisable recovery cause pause-rate-limit
+!
+policy-map type network-qos jumbo
+  class type network-qos class-default
+    mtu 9216
+system qos
+  service-policy type network-qos jumbo
+snmp-server contact cdi_infrastructure@kyderby.com
+snmp-server location {{site_id}}-{{telecom_space}}-CORE
+snmp-server community ReadOnlyCDI group network-operator
+rmon event 1 log trap public description FATAL(1) owner PMON@FATAL
+rmon event 2 log trap public description CRITICAL(2) owner PMON@CRITICAL
+rmon event 3 log trap public description ERROR(3) owner PMON@ERROR
+rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
+rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
+ntp server 216.184.32.177 prefer use-vrf management
+ntp server 216.184.36.177 use-vrf management
+!
+vlan 1
+vlan 999
+  name blackhole
+vlan 1111
+name tote_client_general
+vlan 1180
+ name tote_server_general
+vlan 1310
+ name l2_vmotion
+vlan 1311
+  name l2_storage
+ vlan 1317
+  name printer_general
+vlan 1323
+ name casino_operations
+vlan 1324
+ name simulcast
+vlan 1325
+ name iptv
+vlan 1326
+ name casino_dispatch
+vlan 1330
+ name corp_client_voice
+vlan 1332
+ name infrastructure_mgmt_nonhotel
+vlan 1334
+ infrastructure_egm
+vlan 1336
+ name mgmt_wireless_nonhotel
+vlan 1345
+ name client_pos
+vlan 1347
+ name casino_appliance_3rdparty
+vlan 1352
+ name mgmt_vm
+vlan 1363
+ name corp_client_utility
+vlan 1372
+ name client_voip
+vlan 1364
+ name corp_client_general
+vlan 1380
+ name lighting_control
+vlan 1390
+ name av_control
+vlan 1419
+ name corp_server_general
+vlan 1427
+ name corp_server_casino
+vlan 1444
+ name corp_server_pos
+vlan 1472
+ name corp_server_voip
+vlan 1800
+ name internet_guest_nonhotel
+vlan 1802
+ name internet_atm
+vlan 1803
+ name credit_card_machines
+vlan 1804
+ name internet_time_clock
+vlan 1805
+ name internet_radio
+vlan 1806
+ name conference_room
+vlan 1807
+ name ticket_scanning
+vlan 1808
+ name internet_kiosks
+vlan 2100
+ name tote_terminal_test
+vlan 2300
+ name server_hrm
+vlan 2301
+ name hrm_cluster_ainsworth
+vlan 2302
+ name hrm_cluster_igt
+vlan 2303
+ name hrm_cluster_konami
+vlan 2304
+ name hrm_cluster_scigames
+vlan 2305
+ name hrm_cluster_ati
+vlan 2401
+ name hrm_egm_ainsworth_1
+vlan 2413
+ name hrm_egm_igt_1
+vlan 2426
+ name hrm_egm_konami_1
+vlan 2439
+ name hrm_egm_scigames_1
+vlan 2452
+ name hrm_egm_ati_1
+vlan 2701
+ name oasis_poller_1
+vlan 3550
+ name f5_sync_failover
+!
+spanning-tree pathcost method long
+spanning-tree port type edge bpduguard default
+spanning-tree loopguard default
+spanning-tree vlan 1-3967 priority 8192
+vrf context management
+  ip route 0.0.0.0/0 {{mgmt_gw}}
+vrf context vpc-keepalive
+  description VPC Keepalive
+no port-channel load-balance resilient
+system default switchport
+!
+vpc domain 10
+  peer-switch
+  role priority 10
+  peer-keepalive destination 10.188.{{vpc_oct}}.1 source 10.188.{{vpc_oct}}.0 vrf vpc-keepalive
+  auto-recovery
+!
+port-profile type ethernet interface_access
+  description Access Interface
+  switchport
+  load-interval counter 1 5
+  load-interval counter 2 30
+  load-interval counter 3 300
+  state enabled
+!
+port-profile type port-channel interface_trunk
+  description Trunk Interface
+  switchport
+  switchport mode trunk
+  switchport trunk native vlan 999
+  load-interval counter 1 5
+  load-interval counter 2 30
+  load-interval counter 3 300
+  state enabled
+!
+port-profile type port-channel mgmt
+  description VPC to MDF Management Switch
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 1332,1399
+  state enabled
+ !
+port-profile type ethernet compute
+  description Non-VPC to MDF Compute
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 2-4093
+  state enabled
+!
+port-profile type port-channel rubrik
+  description VPC to Rubrik
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 1352,1400-1499
+  state enabled
+!
+port-profile type port-channel mdf_core
+  description VPC to Enterprise Firewall_Core Switch
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 2-4093
+  state enabled
+!
+ port-profile type port-channel av_agg
+   description VPC to AV Aggregation Switch
+   switchport
+   inherit port-profile interface_trunk
+   switchport trunk allowed vlan 1332, 1390
+   state enabled
+!
+port-profile type port-channel it_access
+  description VPC to IT Access Switch
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 2-1324,1326-1389,1391,1393-1398,2100-2129
+  state enabled
+!
+port-profile type port-channel gaming_agg
+  description VPC to Gaming Switch
+  switchport
+  inherit port-profile interface_trunk
+  switchport trunk allowed vlan 1332,1334,2300-2899
+  state enabled
+!
+interface Vlan1
+!
+interface mgmt0
+  vrf member management
+  ip address {{mgmt_ip}}/24
+!
+cli alias name ipb show ip interface brief
+cli alias name ps show port-channel summary
+cli alias name crf copy running-config bootflash:
+cli alias name is show interface status
+cli alias name wr copy running-config startup-config
+line console
+  exec-timeout 10
+line vty
+  session-limit 5
+  exec-timeout 10
+feature signature-verification
+feature analytics
+ip tcp synwait-time 5
+!
+logging logfile messages 3 size 100000
+logging server {{logging_srvr}} 4 use-vrf management facility local3
+logging source-interface mgmt0
+logging timestamp milliseconds
+!
+interface Ethernet1/1
+ channel-group 1 mode active
+!
+interface Ethernet1/3
+ channel-group 3 mode active
+!
+interface Ethernet1/4
+ channel-group 4 mode active
+!
+interface Ethernet1/5
+ channel-group 5 mode active
+!
+interface Ethernet1/6
+ channel-group 6 mode active
+!
+interface Ethernet1/7
+ channel-group 7 mode active
+!
+interface Ethernet1/8
+ channel-group 8 mode active
+!
+interface Ethernet1/9
+ channel-group 9 mode active
+!
+interface Ethernet1/10
+ channel-group 10 mode active
+!
+interface Ethernet1/11
+ channel-group 11 mode active
+!
+interface Ethernet1/45
+  description VPC Peer-Link to us{{site_id}}sw-core-{{switch_num}}
+  channel-group 3000 mode active
+  no shutdown
+!
+interface Ethernet1/46
+  description VPC Peer-Link to us{{site_id}}sw-core-{{switch_num}}
+  channel-group 3000 mode active
+  no shutdown
+!
+interface Ethernet1/47
+  description Spare for VPC Peer-link or VPC Keepalive
+!
+interface Ethernet1/48
+  description us{{site_id}}sw-core-{{switch_num}} VPC Keeplalive
+  no switchport
+  vrf member vpc-keepalive
+  ip address {{vpc_peer_src_ip}}/31
+  no shutdown
+!
+interface port-channel3000
+ description VPC Peer Link to us{{site_id}}sw-core-{{switch_num}}
+ inherit port-profile mdf_sitecore
+ vpc peer-link
+!
+interface port-channel1
+  description usDCDsw-mgt-mdf-01 Po1
+  vpc
+  inherit port-profile it_access
+!
+interface port-channel2
+  vpc
+  inherit port-profile it_access
+!
+interface port-channel3
+  vpc
+  inherit port-profile it_access
+!
+interface port-channel4
+  vpc
+  inherit port-profile it_access
+!
+interface port-channel5
+  vpc
+  inherit port-profile it_access
+!
+interface port-channel6
+  vpc
+  inherit port-profile gaming_agg
+!
+interface port-channel7
+  vpc
+  inherit port-profile gaming_agg
+exit
+exit
