@@ -1,0 +1,7 @@
+monitor session 1 type erspan-source
+source interface {{src_interface}}
+no shut
+destination
+erspan-id 10
+origin ip add {{switch_origin_ip}}
+ip add {{analyzer_ip}}

@@ -63,7 +63,7 @@ class ChurchFirewall:
 
     def ha_setup(self):
         ha_conf = ha.HighAvailability(enabled=True, group_id=10, state_sync=True, passive_link_state='auto',
-                                      peer_ip='10.1.1.2', peer_ip_backup='10.1.1.6')
+                                      peer_ip='10.1.1.2', peer_ip_backup='10.1.1.6', ha2_keepalive=True)
         ha_eth1 = network.EthernetInterface("ethernet1/7", mode="ha")
         ha_eth2 = network.EthernetInterface("ethernet1/8", mode="ha")
         self.fw_conn.add(ha_eth1)

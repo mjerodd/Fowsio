@@ -1,18 +1,19 @@
 import jinja2
 from django.shortcuts import render, redirect
-from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm
+from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm, ErspanForm
 from .models import Switch, Router, Firewall
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from .forms import CoreTempForm, IntDescriptionForm, IosUpgradeForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm
+from .forms import CoreTempForm, IntDescriptionForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm, IosUpgradeForm
 from nornir import InitNornir
 from nornir_netmiko.tasks import netmiko_send_config, netmiko_send_command, netmiko_file_transfer
 from nornir_utils.plugins.functions import print_result
 from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
-from .tasks import fw_upgrade, get_ints, port_scan
+from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new
 import zipfile
 from io import BytesIO
+
 # Create your views here.
 
 def switches(request):
@@ -201,16 +202,28 @@ def int_descriptions(request):
 
 
 def ios_up(request):
+
     if request.method == 'POST':
         print('This is a post')
+        boot = False
+        form = IosUpgradeForm(request.POST)
 
-        nr = InitNornir(
-            config_file="/app/net_app/yaml_files/config.yaml")
-        results = nr.run(task=send_to_switch)
-        print_result(results)
-        #reload_result = nr.run(task=reboot)
-        #OSError:
-         #   print(f"File Transfer Complete")
+        if form.is_valid():
+            print(form.cleaned_data)
+            ios_ver = form.cleaned_data['image']
+            # try:
+            target = list(form.cleaned_data.values())[0]
+            print(target)
+            target_list = target.split(',')
+            print(target_list)
+
+            results = os_transfer.delay(ios_ver, target_list )
+            boot = form.cleaned_data['boot']
+            if boot == True:
+                for ip in target_list:
+                    boot_new(ios_ver, ip)
+                    print_result(results)
+
         return redirect("thank-you")
     else:
         form = IosUpgradeForm()
@@ -271,4 +284,26 @@ def fw_os_auto(request):
 
 def fw_tools(request):
     return render(request, "net_app/fw_tools.html")
+
+def erspan_tool(request):
+    if request.method == 'POST':
+        form = ErspanForm(request.POST)
+
+        if form.is_valid():
+            print(form.cleaned_data)
+            #src_int = form.cleaned_data['src_interface']
+            #analyzer = form.cleaned_data['analyzer_ip']
+            with open("./net_app/jinja_templates/erspan_template.j2") as data:
+                config = data.read()
+            temp = jinja2.Template(config)
+            span = temp.render(form.cleaned_data)
+            net_connect = miko_connect(form.cleaned_data['switch_ip'])
+            conf = span.splitlines()
+            output = net_connect.send_config_set(config_commands=conf)
+            print(output)
+            return redirect("thank-you")
+    else:
+        form = ErspanForm()
+        context = {"form": form}
+    return render(request, "net_app/erspan.html", context=context)
 

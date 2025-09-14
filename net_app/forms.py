@@ -1,4 +1,6 @@
 from django import forms
+from pygments.lexer import default
+
 from .models import Router, Switch, Firewall
 
 class NewRouterForm(forms.ModelForm):
@@ -44,10 +46,6 @@ class IntDescriptionForm(forms.Form):
     subnet = forms.CharField(max_length=30)
 
 
-class IosUpgradeForm(forms.Form):
-    site_id = forms.CharField()
-
-
 class PaloForm(forms.Form):
     firewall_ip = forms.GenericIPAddressField(label="Firewall IP")
     wan_ip = forms.CharField(max_length=30)
@@ -57,7 +55,18 @@ class PaloOsUpgradeForm(forms.Form):
     firewall_ip = forms.CharField(label="Enter each IP to be upgraded", widget=forms.Textarea)
     version = forms.CharField(max_length=20, label="Code Version")
 
+class IosUpgradeForm(forms.Form):
+    target_ip = forms.CharField(label="Enter each IP to be upgraded", widget=forms.Textarea)
+    image = forms.CharField(max_length=50, label="Image")
+    boot = forms.BooleanField(label="Reboot to new IOS?", required=True)
+
 class CoreSwitchConfForm(forms.Form):
     subnet = forms.CharField(max_length=20, label="Site Mgmt subnet")
     site_id = forms.CharField(max_length=3)
     logging_srv = forms.CharField(max_length=20, label="Site Logging Server")
+
+class ErspanForm(forms.Form):
+    switch_ip = forms.CharField(max_length=20, label="Target Switch IP")
+    src_interface = forms.CharField(max_length=30, label="Interface to Monitor")
+    analyzer_ip = forms.CharField(max_length=20, label="Analyzer IP")
+    switch_origin_ip = forms.CharField(max_length=20, label="Origin IP")

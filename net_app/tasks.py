@@ -1,6 +1,6 @@
 import os.path
 import socket
-from netmiko import ConnectHandler
+from netmiko import ConnectHandler, file_transfer, progress_bar
 from netmiko.exceptions import NetmikoAuthenticationException
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
@@ -51,7 +51,7 @@ def miko_connect(ip):
             'device_type': 'cisco_ios',
             'host': str(ip),
             'username': 'marv',
-            'password': 'toy8892sl2',
+            'password': 'cisco',
         }
 
         net_connect = ConnectHandler(**dev)
@@ -76,6 +76,33 @@ def get_ints(dev_ip):
         rem_int = fact['neighbor_interface']
         net_connect.send_config_set([f"int {loc_int}", f"description {neighbor} - {rem_int}"])
 
+@shared_task
+def os_transfer(image, ip_list):
+    try:
+        for ip in ip_list:
+            n_conn = miko_connect(ip)
+            transfer = file_transfer(n_conn,
+                                source_file=image,
+                                dest_file = image,
+                                file_system='flash:',
+                                direction='put',
+                                overwrite_file=True,
+                                progress4=progress_bar)
+            n_conn.disconnect()
+            return transfer
+    except OSError:
+        print("File Transfer Completed")
+
+def boot_new(image, ip):
+    boot_comm = [
+        'no boot system',
+        f'boot system flash:{image}'
+    ]
+    net_connect = miko_connect(ip)
+    net_connect.send_config_set(boot_comm)
+    net_connect.send_command("wr mem")
+    net_connect.send_command('reload', expect_string='confirm')
+    net_connect.send_command('\n')
 
 
 
