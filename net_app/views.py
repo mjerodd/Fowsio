@@ -1,18 +1,21 @@
 import jinja2
 from django.shortcuts import render, redirect
-from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm, ErspanForm
+from django.contrib import messages
+from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm, ErspanForm, FirewallHAForm
 from .models import Switch, Router, Firewall
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from .forms import CoreTempForm, IntDescriptionForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm, IosUpgradeForm
+from .forms import CoreTempForm, IntDescriptionForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm, IosUpgradeForm, \
+    FirewallCheckForm
 from nornir import InitNornir
 from nornir_netmiko.tasks import netmiko_send_config, netmiko_send_command, netmiko_file_transfer
 from nornir_utils.plugins.functions import print_result
 from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
-from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new
+from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new, fw_compare
 import zipfile
 from io import BytesIO
+
 
 # Create your views here.
 
@@ -27,6 +30,7 @@ def switches(request):
     context = {'form': form, 'switches': switches}
     return render(request, "net_app/switches.html", context=context)
 
+
 def switch_edit(request, slug):
     switch = Switch.objects.get(slug=slug)
     form = NewSwitchForm(request.POST or None, request.FILES or None, instance=switch)
@@ -36,6 +40,7 @@ def switch_edit(request, slug):
             form.save()
             return redirect('index')
     return render(request, 'net_app/switch_edit.html', {'form': form, 'switch': switch})
+
 
 def routers(request):
     form = NewSwitchForm()
@@ -48,6 +53,7 @@ def routers(request):
     context = {'form': form, 'routers': routers}
     return render(request, "net_app/switches.html", context=context)
 
+
 def router_edit(request, slug):
     router = Switch.objects.get(slug=slug)
     form = NewSwitchForm(request.POST or None, request.FILES or None, instance=router)
@@ -58,6 +64,7 @@ def router_edit(request, slug):
             return redirect('index')
     return render(request, 'net_app/switch_edit.html', {'form': form, 'router': router})
 
+
 def download_switch_templ(request, slug):
     switch = get_object_or_404(Switch, slug=slug)
     file_path = switch.template.path
@@ -67,6 +74,7 @@ def download_switch_templ(request, slug):
     response['Content-Type'] = 'application/octet-stream'
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
     return response
+
 
 def index(request):
     return render(request, "net_app/index.html")
@@ -95,6 +103,7 @@ def send_to_switch(task):
 
     except OSError:
         print(f"File Transfer for {task.host} Complete")
+
 
 def nex_conf(task):
     template = task.run(task=template_file, template="nx_template.j2", path="/app/net_app/yaml_files/config.yaml")
@@ -130,10 +139,10 @@ def core_temp(request):
             print(type(form.cleaned_data['subnet']))
             cor_ips = core_ip(form.cleaned_data['subnet'])
             switch1 = {
-                "site_id" : form.cleaned_data['site_id'],
+                "site_id": form.cleaned_data['site_id'],
                 "switch_num": "01",
                 "mgmt_gw": cor_ips[2],
-                "vpc_oct":cor_ips[3],
+                "vpc_oct": f"{cor_ips[3]}.0",
                 "mgmt_ip": cor_ips[0],
                 "logging_srv": form.cleaned_data['logging_srv'],
             }
@@ -143,13 +152,12 @@ def core_temp(request):
                 "switch_num": "02",
                 "mgmt_gw": cor_ips[2],
                 "vpc_oct": cor_ips[3],
-                "mgmt_ip": cor_ips[1],
-                "logging_srv": form.cleaned_data['logging_srv'],
+                "mgmt_ip": cor_ips[1], f"{cor_ips[3]}.1"
+                                       "logging_srv": form.cleaned_data['logging_srv'],
             }
             print(cor_ips)
 
-
-            with open("./net_app/jinja_templates/nx_template.j2") as data:
+            with open("./uploads/jinja_template/nx_template.j2") as data:
                 config = data.read()
             temp = jinja2.Template(config)
             switch1_conf = temp.render(switch1)
@@ -202,7 +210,6 @@ def int_descriptions(request):
 
 
 def ios_up(request):
-
     if request.method == 'POST':
         print('This is a post')
         boot = False
@@ -217,7 +224,7 @@ def ios_up(request):
             target_list = target.split(',')
             print(target_list)
 
-            results = os_transfer.delay(ios_ver, target_list )
+            results = os_transfer.delay(ios_ver, target_list)
             boot = form.cleaned_data['boot']
             if boot == True:
                 for ip in target_list:
@@ -231,11 +238,11 @@ def ios_up(request):
 
 
 def reboot(task):
-
-    task.run(task=netmiko_send_config, enable=True, config_commands=['boot system flash:isr4300-universalk9.17.06.08a.SPA.bin'])
+    task.run(task=netmiko_send_config, enable=True,
+             config_commands=['boot system flash:isr4300-universalk9.17.06.08a.SPA.bin'])
 
     task.run(task=netmiko_send_command, command_string='wr mem')
-    task.run(task=netmiko_send_command, command_string='reload',  expect_string='confirm')
+    task.run(task=netmiko_send_command, command_string='reload', expect_string='confirm')
     task.run(task=netmiko_send_command, command_string='\n')
 
 
@@ -263,19 +270,25 @@ def fw_os_auto(request):
             print("valid")
             print(form.cleaned_data)
             fw_ver = form.cleaned_data['version']
-            #try:
+            # try:
             target = list(form.cleaned_data.values())[0]
             print(target)
             target_list = target.split(',')
-            print(target_list)
+            # print(target_list)
+            for fw in target_list:
+                print(fw)
+                try:
+                    cf = ChurchFirewall(fw)
+                    cf.os_update(fw_ver)
+                    messages.success(request, f"OS Upgrade Completed for {fw}")
+                except Exception as e:
+                    print(e)
+                    messages.error(request, f"OS Upgrade for {fw} failed")
 
-            result = fw_upgrade.delay(target_list, fw_ver)
-
-            #except Exception as e:
+            # except Exception as e:
             #   print("Error: ", e)
-            context = {'task_id': result.task_id}
 
-            return render(request, "net_app/fw_os_auto.html", context)
+            return render(request, "net_app/fw_os_auto.html")
     else:
         form = PaloOsUpgradeForm()
         context = {'form': form, 'task_id': None}
@@ -285,14 +298,15 @@ def fw_os_auto(request):
 def fw_tools(request):
     return render(request, "net_app/fw_tools.html")
 
+
 def erspan_tool(request):
     if request.method == 'POST':
         form = ErspanForm(request.POST)
 
         if form.is_valid():
             print(form.cleaned_data)
-            #src_int = form.cleaned_data['src_interface']
-            #analyzer = form.cleaned_data['analyzer_ip']
+            # src_int = form.cleaned_data['src_interface']
+            # analyzer = form.cleaned_data['analyzer_ip']
             with open("./net_app/jinja_templates/erspan_template.j2") as data:
                 config = data.read()
             temp = jinja2.Template(config)
@@ -307,3 +321,91 @@ def erspan_tool(request):
         context = {"form": form}
     return render(request, "net_app/erspan.html", context=context)
 
+
+def fw_check(request):
+    if request.method == 'POST':
+        form = FirewallCheckForm(request.POST)
+
+        if form.is_valid():
+            print(form.cleaned_data)
+            fw_ip = form.cleaned_data['ip_address']
+            cf = ChurchFirewall(firewall_ip=fw_ip)
+            system_info = cf.fw_sys_info()
+            ha_list = cf.ha_status()
+            software_ver = system_info[0]
+            hostname = system_info[1]
+            timezone = system_info[2]
+            pano_ip = system_info[3]
+            alg_ans = cf.sip_alg()
+            dns_dict = cf.get_dns()
+            ntp_dict = cf.get_ntp()
+            admin_user_pres = cf.get_users()
+
+            cf.fw_csv(alg_ans, software_ver, hostname, timezone, dns_dict['primary'], dns_dict['secondary']['#text'],
+                      ntp_dict['pri_ntp'], ntp_dict['sec_ntp'], pano_ip, ha_list[0], ha_list[1], ha_list[2][0],
+                      ha_list[2][1], ha_list[3][0], ha_list[3][1], ha_list[4], ha_list[5][0], ha_list[5][1],
+                      ha_list[6][0], ha_list[6][1],
+                      ha_list[7], ha_list[8], ha_list[9], ha_list[10], ha_list[11], ha_list[12], ha_list[13],
+                      ha_list[14],
+                      ha_list[15], admin_user_pres)
+
+            fw_dict = {
+                "alg_ans": alg_ans,
+                "software_ver": software_ver,
+                "hostname": hostname,
+                "timezone": timezone,
+                "p_dns": dns_dict['primary'],
+                "s_dns": dns_dict['secondary'],
+                "p_ntp": ntp_dict['pri_ntp'],
+                "s_ntp": ntp_dict['sec_ntp'],
+                "pano_ip": pano_ip,
+                "ha_enabled": ha_list[0],
+                "ha_core_lm_ena": ha_list[1],
+                "ha_core_lm_int1": ha_list[2][0],
+                "ha_core_lm_int1_stat": ha_list[2][1],
+                "ha_core_lm_int2": ha_list[3][0],
+                "ha_core_lm_int2_stat": ha_list[3][1],
+                "ha_wan_lm_ena": ha_list[4],
+                "ha_wan_lm_int1": ha_list[5][0],
+                "ha_wan_lm_int1_stat": ha_list[5][1],
+                "ha_wan_lm_int2": ha_list[6][0],
+                "ha_wan_lm_int2_stat": ha_list[6][1],
+                "ha_ha1_ip": ha_list[7],
+                "ha_ha1_bu_ip": ha_list[8],
+                "ha_preempt": ha_list[9],
+                "ha_priority": ha_list[10],
+                "ha_ha1_conn": ha_list[11],
+                "ha_ha1_bu_conn": ha_list[12],
+                "ha_ha2_conn": ha_list[13],
+                "ha_ha1_peer_ip": ha_list[14],
+                "ha_ha1_peer_bu_ip": ha_list[15],
+                "admin_user_pres": admin_user_pres,
+            }
+            render_dict = fw_compare(fw_dict)
+            context = {"dict": render_dict, "hostname": hostname, "results": fw_dict}
+            return render(request, 'net_app/fw-check-results.html', context)
+
+    else:
+        form = FirewallCheckForm()
+        context = {'form': form}
+    return render(request, "net_app/fw_check.html", context=context)
+
+
+def fw_ha_conf(request):
+    if request.method == 'POST':
+        form = FirewallHAForm(request.POST)
+
+        if form.is_valid():
+            print(form.cleaned_data)
+            cf = ChurchFirewall(form.cleaned_data['fw_ip'])
+            hostname = form.cleaned_data['fw_hostname']
+            model = form.cleaned_data['fw_model']
+            cf.ha_setup(model)
+            # conf_fw.init_net(form.cleaned_data['wan_ip'])
+            messages.success(request, f"HA Config Deployed for {hostname}")
+
+            return redirect("thank-you")
+    else:
+        form = FirewallHAForm()
+        context = {"form": form}
+    return render(request, "net_app/ha-conf.html", context=context)

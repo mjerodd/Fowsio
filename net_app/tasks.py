@@ -10,15 +10,47 @@ import os
 import netaddr
 
 jinja_temps = '/home/marv/PycharmProjects/Account_Template/starter/net_app/jinja_templates'
+results_dict = {
+        "alg_ans": "Disabled",
+        "software_ver": "11.1.10-h10",
+        "timezone": "GMT",
+        "p_dns": ["172.16.4.63"],
+        "s_dns": ["172.16.4.65"],
+        "p_ntp": "216.184.32.177",
+        "s_ntp": "216.184.36.177",
+        "pano_ip": "216.184.33.75",
+        "ha_enabled": "yes",
+        "ha_core_lm_ena": "yes",
+        "ha_core_lm_int1": "ethernet1/17",
+        "ha_core_lm_int1_stat": "up",
+        "ha_core_lm_int2": "ethernet1/18",
+        "ha_core_lm_int2_stat": "up",
+        "ha_wan_lm_ena": "yes",
+        "ha_wan_lm_int1": "ethernet1/19",
+        "ha_wan_lm_int1_stat": "up",
+        "ha_wan_lm_int2": "ethernet1/20",
+        "ha_wan_lm_int2_stat": "up",
+        "ha_ha1_ip": "10.0.0.1",
+        "ha_ha1_bu_ip": "10.0.0.5",
+        "ha_preempt": "no",
+        "ha_priority": "100",
+        "ha_ha1_conn": "up",
+        "ha_ha1_bu_conn": "up",
+        "ha_ha2_conn": "up",
+        "ha_ha1_peer_ip": "10.0.0.2",
+        "ha_ha1_peer_bu_ip": "10.0.0.6",
+        "admin_user_pres": "no",
 
-@shared_task(bind=True)
-def fw_upgrade(self, fw_list, fw_ver):
-    progress_recorder = ProgressRecorder(self)
+    }
+
+
+def fw_upgrade(fw_list, fw_ver):
+
     for fw in fw_list:
         print(fw)
         cf = ChurchFirewall(fw)
         cf.os_update(fw_ver)
-        progress_recorder.set_progress(0 + 1, len(fw_list))
+
 
 
 def conn_scan(tgt_host):
@@ -103,6 +135,18 @@ def boot_new(image, ip):
     net_connect.send_command("wr mem")
     net_connect.send_command('reload', expect_string='confirm')
     net_connect.send_command('\n')
+
+def fw_compare(check_dict):
+    fw_colors = {}
+
+    for key, val in results_dict.items():
+        if check_dict.get(key, val) == val:
+            fw_colors.update({key: "green"})
+            continue
+        else:
+            fw_colors.update({key: "red"})
+            continue
+    return fw_colors
 
 
 

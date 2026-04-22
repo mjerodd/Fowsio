@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <title>  </title>
+    <title></title>
 </head>
 <body class="text-white">
 
 <div class="grid grid-cols-8">
     <div class="col-span-2 bg-slate-50 text-zinc-900">
         <nav>
-            <div class="bg-indigo-900 mb-4 border-b border-slate-900">
-                <h1 class="text-4xl text-underline-offset text-yellow-400 font-bold p-4">
+            <div class="bg-blue-900 text-white mb-4 border-4 border-white">
+                <h1 class="text-4xl text-underline-offset text-white font-bold p-4">
                     <a href="{% url 'index' %}">Fowsio</a>
                 </h1>
             </div>
@@ -19,40 +19,40 @@
 
                 <li>
                     <a href="{% url 'ini-fw-auto' %}">
-                                                <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Firewall Setup Automation
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
-<li>
+                <li>
                     <a href="{% url 'fw-os-auto' %}">
-                                                <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Firewall OS Upgrade
 </span>
-</button>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'fw-ha-conf' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Firewall HA Configuration
+</span>
+                        </button>
                     </a>
                 </li>
 
-                 <li>
-                    <a href="#">
-                                                <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
-<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
-IOS Upgrade Tool
-</span>
-</button>
-                    </a>
-                </li>
 
                 <li>
-                    <a href="#">
+                    <a href="{% url 'routers'%}">
                         <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Routers
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
 
@@ -62,7 +62,7 @@ Routers
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Switches
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
 
@@ -72,7 +72,7 @@ Switches
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Firewalls
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
 
@@ -82,7 +82,7 @@ Firewalls
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Nexus Core Config Generation
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
 
@@ -92,7 +92,7 @@ Nexus Core Config Generation
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 Interface Description Tool
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
                 <li>
@@ -101,7 +101,7 @@ Interface Description Tool
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 IOS Upgrade Tool
 </span>
-</button>
+                        </button>
                     </a>
                 </li>
 
@@ -111,17 +111,37 @@ IOS Upgrade Tool
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
 ERSpan Tool
 </span>
-</button>
+                        </button>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'fw-check' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+Firewall Checklist
+</span>
+                        </button>
                     </a>
                 </li>
 
             </ul>
         </nav>
-        </div>
+    </div>
     {% block content %}
 
-{% endblock %}
-    </div>
+    {% endblock %}
+</div>
 
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li %} %} class="{{ message.tags }}" endif if message.tags {% {%>
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}{% endif %}
+        <h5>{{ message }}</h5>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
 </body>
 </html>

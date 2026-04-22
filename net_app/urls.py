@@ -15,4 +15,6 @@ urlpatterns = [
     path('firewall-auto/', views.fw_tools, name='firewall-tools'),
     path('firewall-os-upgrade/', views.fw_os_auto, name='fw-os-auto'),
     path('erspanp-tool/', views.erspan_tool, name='erspan'),
+    path('firewall-checklist/', views.fw_check, name='fw-check'),
+    path('firewall-ha/', views.fw_ha_conf, name='fw-ha-conf'),
 ]

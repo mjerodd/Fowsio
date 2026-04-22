@@ -1,0 +1,18 @@
+{% load static %}
+<div class="relative overflow-x-auto">
+    <table class="w-full text-lg font-bold text-left rtl:text-right text-yellow-400 dark:text-gray-400">
+
+        <tbody>
+    {% for key, val in dict.items %}
+              <tr>
+    <td>{{ key }}</td>
+    {% if val == "green" %}
+    <td><img src="{% static 'images/green_circle.png' %}" alt=""></td>
+     {% else %}
+     <td><img src="{% static 'images/red_circle.jpg' %}" alt=""></td>
+      {% endif %}
+                </tr>
+     {% endfor %}
+</tbody>
+    </table>
+</div>

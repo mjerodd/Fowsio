@@ -1,10 +1,18 @@
 hostname us{{site_id}}sw-core-{{switch_num}}
 vdc us{{site_id}}sw-core-{{switch_num}} id 1
+ limit-resource vlan minimum 16 maximum 4093
+ limit-resource vrf minimum 2 maximum 4096
+ limit-resource port-channel minimum 0 maximum 48
+ limit-resource u4route-mem minimum 128 maximum 128
+ limit-resource u6route-mem minimum 96 maximum 96
+ limit-resource m4route-mem minimum 58 maximum 58
+ limit-resource m6route-mem minimum 8 maximum 8
+ limit-resource vni_bd minimum 4096 maximum 4096
 !
 feature bash-shell
 feature ssh
 feature tacacs+
-cfs distribute
+cfs eth distribute
 feature scheduler
 feature pim
 feature interface-vlan
@@ -23,6 +31,8 @@ logging level radius 5
 logging level spanning-tree 6
 logging level tacacs 5
 logging level vpc 6
+banner motd ^
+!
 banner motd ^
         __        __               _
         \ \      / /_ _ _ __ _ __ (_)_ __   __ _
@@ -51,12 +61,13 @@ ip domain-lookup
 ip domain-name infra.chdn.com
 vrf context management
   ip name-server 172.16.7.250 172.17.0.250
-tacacs-server host 172.16.15.12 key 7 "{{tacacs_key}}" timeout 45
-tacacs-server host 172.17.15.13 key 7 "{{tacacs_key}}" timeout 45
+tacacs-server host {tacacs_srvr_1} key 7 "{tacacs_key}" timeout 45
+tacacs-server host {tacacs_srvr_2} key 7 "{tacacs_key}" timeout 45
 aaa group server tacacs+ mgmt
-    server 172.16.15.12
-    server 172.17.15.13
+    server {tacacs_srvr_1}
+    server {tacacs_srvr_2}
     source-interface mgmt0
+system default switchport shutdown
 logging event trunk-status default
 service unsupported-transceiver
 errdisable recovery cause link-flap
@@ -69,22 +80,22 @@ errdisable recovery cause vpc-peerlink
 errdisable recovery cause failed-port-state
 errdisable recovery cause vlan-membership
 errdisable recovery cause pause-rate-limit
-!
+
 policy-map type network-qos jumbo
   class type network-qos class-default
     mtu 9216
 system qos
   service-policy type network-qos jumbo
 snmp-server contact cdi_infrastructure@kyderby.com
-snmp-server location {{site_id}}-{{telecom_space}}-CORE
+snmp-server location {site_id}-{telecom_space}-CORE
 snmp-server community ReadOnlyCDI group network-operator
 rmon event 1 log trap public description FATAL(1) owner PMON@FATAL
 rmon event 2 log trap public description CRITICAL(2) owner PMON@CRITICAL
 rmon event 3 log trap public description ERROR(3) owner PMON@ERROR
 rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
 rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
-ntp server 216.184.32.177 prefer use-vrf management
-ntp server 216.184.36.177 use-vrf management
+ntp server {ntp_srvr_1} prefer use-vrf management
+ntp server {ntp_srvr_2} use-vrf management
 !
 vlan 1
 vlan 999
@@ -323,6 +334,13 @@ interface Ethernet1/10
 interface Ethernet1/11
  channel-group 11 mode active
 !
+interface Ethernet1/41
+ channel-group 41 mode active
+!
+interface Ethernet1/42
+ channel-group 42 mode active
+!
+!
 interface Ethernet1/45
   description VPC Peer-Link to us{{site_id}}sw-core-{{switch_num}}
   channel-group 3000 mode active
@@ -340,7 +358,7 @@ interface Ethernet1/48
   description us{{site_id}}sw-core-{{switch_num}} VPC Keeplalive
   no switchport
   vrf member vpc-keepalive
-  ip address {{vpc_peer_src_ip}}/31
+  ip address 10.188.{{vpc_oct}}/31
   no shutdown
 !
 interface port-channel3000
@@ -386,3 +404,30 @@ interface port-channel42
  inherit port-profile mdf_core
 exit
 exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,6 +57,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'bg-gray-100 text-gray-700',
+    messages.INFO: 'bg-blue-100 text-blue-700 border-blue-500',
+    messages.SUCCESS: 'bg-green-100 text-green-700 border-green-500',
+    messages.WARNING: 'bg-yellow-100 text-yellow-700 border-yellow-500',
+    messages.ERROR: 'bg-red-100 text-red-700 border-red-500',
+}
 
 ROOT_URLCONF = 'starter.urls'
 
