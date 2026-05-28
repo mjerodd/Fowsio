@@ -14,6 +14,7 @@ from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
 from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new, fw_compare
 import zipfile
+import concurrent.futures as cf
 from io import BytesIO
 
 
@@ -261,6 +262,10 @@ def ini_fw_auto(request):
         context = {'form': form}
     return render(request, "net_app/firewall_auto.html", context=context)
 
+def upgrade_church_fw(firewall_ip, firewall_version):
+    church_fw = ChurchFirewall(firewall_ip)
+    church_fw.os_update(firewall_version)
+
 
 def fw_os_auto(request):
     if request.method == 'POST':
@@ -275,24 +280,50 @@ def fw_os_auto(request):
             print(target)
             target_list = target.split(',')
             # print(target_list)
+
             for fw in target_list:
                 print(fw)
                 try:
-                    cf = ChurchFirewall(fw)
-                    cf.os_update(fw_ver)
-                    messages.success(request, f"OS Upgrade Completed for {fw}")
+                    fw_upgrade.delay(fw, fw_ver)
+                    messages.success(request, f"OS Upgrade Started for {fw}")
                 except Exception as e:
                     print(e)
                     messages.error(request, f"OS Upgrade for {fw} failed")
-
-            # except Exception as e:
-            #   print("Error: ", e)
 
             return render(request, "net_app/fw_os_auto.html")
     else:
         form = PaloOsUpgradeForm()
         context = {'form': form, 'task_id': None}
     return render(request, "net_app/fw_os_auto.html", context=context)
+
+def xml_fw_os_auto(request):
+    if request.method == 'POST':
+        form = PaloOsUpgradeForm(request.POST)
+
+        if form.is_valid():
+            print("valid")
+            print(form.cleaned_data)
+            fw_ver = form.cleaned_data['version']
+            # try:
+            target = list(form.cleaned_data.values())[0]
+            print(target)
+            target_list = target.split(',')
+            # print(target_list)
+
+            for fw in target_list:
+                print(fw)
+                try:
+                    xml_fw_os_auto().delay(fw, fw_ver)
+                    messages.success(request, f"OS Upgrade Started for {fw}")
+                except Exception as e:
+                    print(e)
+                    messages.error(request, f"OS Upgrade for {fw} failed")
+
+            return render(request, "net_app/xml_fw_os_auto.html")
+    else:
+        form = PaloOsUpgradeForm()
+        context = {'form': form, 'task_id': None}
+    return render(request, "net_app/xml_fw_os_auto.html", context=context)
 
 
 def fw_tools(request):

@@ -1,5 +1,5 @@
 import os.path
-import socket
+import socket, time
 from netmiko import ConnectHandler, file_transfer, progress_bar
 from netmiko.exceptions import NetmikoAuthenticationException
 from celery import shared_task
@@ -44,13 +44,38 @@ results_dict = {
     }
 
 
-def fw_upgrade(fw_list, fw_ver):
-
-    for fw in fw_list:
-        print(fw)
-        cf = ChurchFirewall(fw)
+@shared_task(bind=True)
+def fw_upgrade(self, fw_ip, fw_ver):
+    try:
+        cf = ChurchFirewall(fw_ip)
         cf.os_update(fw_ver)
+    except Exception as e:
+        raise self.retry(exc=e, countdown=30)
 
+@shared_task
+def xml_fw_upgrade(fw_ip, fw_ver):
+    try:
+        cf = ChurchFirewall(fw_ip)
+        cf.palo_xml_os_check()
+        if "11.1" in fw_ver:
+            cf.palo_xml_dwnld("11.1.0")
+
+        dwnld_job = cf.palo_xml_dwnld(fw_ver)
+
+        while cf.get_job(dwnld_job)[0] != 'FIN':
+            print(f"{cf.fw_host} os download in progress, please wait...")
+            time.sleep(60)
+
+        install_job = cf.palo_xml_install(fw_ver)
+
+        while cf.get_job(install_job)[0] != 'FIN':
+            print(f"{cf.fw_host} os install in progress, please wait...")
+            time.sleep(60)
+
+        cf.palo_xml_reboot()
+        print(f"{cf.fw_host} is rebooting")
+    except Exception as e:
+        print(e)
 
 
 def conn_scan(tgt_host):

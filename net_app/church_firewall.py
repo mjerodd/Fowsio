@@ -41,8 +41,8 @@ class ChurchFirewall:
     }
 
     def __init__(self, firewall_ip):
-        self.api_user = "admin"
-        self.api_password = "CRC_Derby"
+        self.api_user = "m.thomas"
+        self.api_password = "Marvelou5marv77*"
         self.fw_host = firewall_ip
         self.fw_conn = firewall.Firewall(hostname=self.fw_host, api_username=self.api_user,
                                          api_password=self.api_password)
@@ -267,7 +267,7 @@ class ChurchFirewall:
 
     def os_update(self, version):
         code = updater.SoftwareUpdater(self.fw_conn)
-        code.download_install_reboot(version=version)
+        code.upgrade_to_version(version)
         # once program completes device reboots
 
     def disable_pan2(self):
@@ -735,3 +735,47 @@ class ChurchFirewall:
             else:
 
                 return 'no'
+
+    def palo_xml_os_check(self):
+        check_cmd = self.fw_session.get(
+            f"https://{self.fw_host}/api/?type=op&cmd=<request><system><software><check></check></software></system></request>&key={self.fw_token}",
+            verify=False)
+
+        resp = xmltodict.parse(check_cmd.text)
+        pprint(resp)
+
+    def palo_xml_dwnld(self, version):
+        dwnld_cmd = self.fw_session.get(
+            f"https://{self.fw_host}/api/?type=op&cmd=<request><system><software><download><version>{version}</version></download></software></system></request>&key={self.fw_token}",
+            verify=False)
+
+        resp = xmltodict.parse(dwnld_cmd.text)
+        pprint(resp)
+        job_id = resp['response']['result']['job']
+        return job_id
+
+    def get_job(self, job_id):
+
+        get_job_stat = self.fw_session.get(
+            f"https://{self.fw_host}/api/?type=op&cmd=<show><jobs><id>{job_id}</id></jobs></show>&key={self.fw_token}",
+            verify=False)
+        job_resp = xmltodict.parse(get_job_stat.text)
+        job_result = job_resp['response']['result']['job']['result']
+        job_status = job_resp['response']['result']['job']['status']
+        return (job_status, job_result)
+
+    def palo_xml_install(self, version):
+        install_cmd = self.fw_session.get(
+        f"https://{self.fw_host}/api/?type=op&cmd=<request><system><software><install><version>{version}</version></install></software></system></request>&key={self.fw_token}",
+        verify=False)
+        resp = xmltodict.parse(install_cmd.text)
+        job_id = resp['response']['result']['job']
+        pprint(resp)
+        return job_id
+
+    def palo_xml_reboot(self):
+        reboot_cmd = self.fw_session.get(
+        f"https://{self.fw_host}/api/?type=op&cmd=<request><restart><system></system></restart></request>&key={self.fw_token}",
+        verify=False)
+        resp = xmltodict.parse(reboot_cmd.text)
+        pprint(resp)
