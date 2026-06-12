@@ -12,7 +12,7 @@ from nornir_netmiko.tasks import netmiko_send_config, netmiko_send_command, netm
 from nornir_utils.plugins.functions import print_result
 from nornir_jinja2.plugins.tasks import template_file
 from .church_firewall import ChurchFirewall
-from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new, fw_compare
+from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, boot_new, fw_compare, xml_fw_upgrade
 import zipfile
 import concurrent.futures as cf
 from io import BytesIO
@@ -75,6 +75,14 @@ def download_switch_templ(request, slug):
     response['Content-Type'] = 'application/octet-stream'
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
     return response
+
+def post_upgrade_report(request):
+
+    routers = Router.objects.all()
+    if request.method == 'POST':
+        form = NewRouterForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
 
 
 def index(request):
@@ -307,24 +315,29 @@ def xml_fw_os_auto(request):
             # try:
             target = list(form.cleaned_data.values())[0]
             print(target)
-            target_list = target.split(',')
-            # print(target_list)
+
+            pre_tl = target.split(',')
+            target_list = [item.replace("\r", "").replace("\n", "") for item in pre_tl]
+            print(target_list)
 
             for fw in target_list:
                 print(fw)
                 try:
-                    xml_fw_os_auto().delay(fw, fw_ver)
-                    messages.success(request, f"OS Upgrade Started for {fw}")
+                    xml_fw_upgrade.delay(fw, fw_ver)
+                    messages.info(request, f"OS Upgrade Started for {fw}")
                 except Exception as e:
                     print(e)
                     messages.error(request, f"OS Upgrade for {fw} failed")
 
             return render(request, "net_app/xml_fw_os_auto.html")
+
     else:
         form = PaloOsUpgradeForm()
         context = {'form': form, 'task_id': None}
     return render(request, "net_app/xml_fw_os_auto.html", context=context)
 
+def palo_after_upgrade_verify(request):
+    pass
 
 def fw_tools(request):
     return render(request, "net_app/fw_tools.html")

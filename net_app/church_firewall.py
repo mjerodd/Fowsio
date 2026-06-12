@@ -3,12 +3,7 @@ import xmltodict
 from pprint import pprint
 import subprocess, os, time, datetime, csv
 import requests
-from environ import Env
-
-
-env = Env()
-Env.read_env()
-
+from django.conf import settings
 
 
 class ChurchFirewall:
@@ -41,8 +36,8 @@ class ChurchFirewall:
     }
 
     def __init__(self, firewall_ip):
-        self.api_user = "m.thomas"
-        self.api_password = "Marvelou5marv77*"
+        self.api_user = "admin"
+        self.api_password = "HBC_Derby"
         self.fw_host = firewall_ip
         self.fw_conn = firewall.Firewall(hostname=self.fw_host, api_username=self.api_user,
                                          api_password=self.api_password)
@@ -779,3 +774,42 @@ class ChurchFirewall:
         verify=False)
         resp = xmltodict.parse(reboot_cmd.text)
         pprint(resp)
+
+    def check_firewall_boot(self):
+        while True:
+            try:
+                sys_results = self.fw_conn.op(cmd='show system info', xml=True)
+                results_dict = xmltodict.parse(sys_results)
+                uptime = results_dict['response']['result']['system']['uptime']
+                if uptime:
+                    print(f'{self.fw_host} is online')
+                    break
+                else:
+                    print("***firewall rebooting, please wait***")
+                    time.sleep(60)
+            except Exception as e:
+                print(e)
+        return f'{self.fw_host} Online'
+
+    def get_ha_peer(self):
+        ha_results = self.fw_conn.op(cmd='show high-availability state', xml=True)
+        results_dict = xmltodict.parse(ha_results)
+        peer_ip = results_dict['response']['result']['group']['peer-info']['mgmt-ip'][:-3]
+        pprint(peer_ip)
+        return peer_ip
+
+    def get_ha_state(self):
+        ha_results = self.fw_conn.op(cmd='show high-availability state', xml=True)
+        results_dict = xmltodict.parse(ha_results)
+        ha_state = results_dict['response']['result']['group']['local-info']['state']
+
+        return ha_state
+
+    def post_upgrade_csv(self,hostname, ha_state, version):
+        with open(f"upgrade_job_{datetime.datetime.now()}", 'w', newline='') as cv:
+            writer = csv.writer(cv)
+
+            (writer.writerow(['Hostname', 'FW IP', 'HA State', 'Software Version']))
+
+            writer.writerow(
+                [hostname, self.fw_host, ha_state, version])

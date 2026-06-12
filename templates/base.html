@@ -11,8 +11,8 @@
     <div class="col-span-2 bg-slate-50 text-zinc-900">
         <nav>
             <div class="bg-blue-900 text-white mb-4 border-4 border-white">
-                <h1 class="text-4xl text-underline-offset text-white font-bold p-4">
-                    <a href="{% url 'index' %}">Fowsio</a>
+                <h1 class="text-3xl text-underline-offset text-white font-bold p-4">
+                    <a href="{% url 'index' %}">M.E.A.</a>
                 </h1>
             </div>
             <ul class="px-2">
@@ -30,11 +30,22 @@ Firewall Setup Automation
                     <a href="{% url 'fw-os-auto' %}">
                         <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
 <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
-Firewall OS Upgrade
+Firewall OS Upgrade Tool
 </span>
                         </button>
                     </a>
                 </li>
+
+                                <li>
+                    <a href="{% url 'xml-fw-os-auto' %}">
+                        <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+<span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+XML Firewall OS Upgrade Tool
+</span>
+                        </button>
+                    </a>
+                </li>
+
                 <li>
                     <a href="{% url 'fw-ha-conf' %}">
                         <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-slate-900 to-blue-500 group-hover:from-slate-900 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
@@ -128,6 +139,7 @@ Firewall Checklist
             </ul>
         </nav>
     </div>
+
     {% block content %}
 
     {% endblock %}

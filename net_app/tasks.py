@@ -1,11 +1,13 @@
 import os.path
-import socket, time
+import socket, time, subprocess, csv, datetime
 from netmiko import ConnectHandler, file_transfer, progress_bar
 from netmiko.exceptions import NetmikoAuthenticationException
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
 from .church_firewall import ChurchFirewall
+from .models import FwUpgradeReport
 import jinja2
+import xmltodict
 import os
 import netaddr
 
@@ -43,6 +45,16 @@ results_dict = {
 
     }
 
+def ping_resp(ip):
+    p_result = subprocess.run(f'ping {ip} -c3', capture_output=True, text=True, shell=True)
+    loss = p_result.returncode
+    print(loss)
+
+    if loss == 1:
+        return False
+    else:
+        return True
+
 
 @shared_task(bind=True)
 def fw_upgrade(self, fw_ip, fw_ver):
@@ -54,11 +66,18 @@ def fw_upgrade(self, fw_ip, fw_ver):
 
 @shared_task
 def xml_fw_upgrade(fw_ip, fw_ver):
+
     try:
         cf = ChurchFirewall(fw_ip)
+        #print(cf.api_user)
+
         cf.palo_xml_os_check()
         if "11.1" in fw_ver:
-            cf.palo_xml_dwnld("11.1.0")
+            pre_dwnld_job = cf.palo_xml_dwnld("11.1.0")
+
+            while cf.get_job(pre_dwnld_job)[0] != 'FIN':
+                print(f"{cf.fw_host} os download in progress, please wait...")
+                time.sleep(60)
 
         dwnld_job = cf.palo_xml_dwnld(fw_ver)
 
@@ -70,12 +89,28 @@ def xml_fw_upgrade(fw_ip, fw_ver):
 
         while cf.get_job(install_job)[0] != 'FIN':
             print(f"{cf.fw_host} os install in progress, please wait...")
-            time.sleep(60)
+            time.sleep(120)
 
         cf.palo_xml_reboot()
         print(f"{cf.fw_host} is rebooting")
+
+        while ping_resp(f"{cf.fw_host}"):
+            print('Waiting for firewall to reboot')
+            time.sleep(30)
+        print("firewall rebooting...")
+        print(cf.check_firewall_boot())
+        time.sleep(60)
+
+        sys_results = cf.fw_conn.op(cmd='show system info', xml=True)
+        results_dict = xmltodict.parse(sys_results)
+        fw_hostname = results_dict['response']['result']['system']['devicename']
+        ha_state = cf.get_ha_state()
+        soft_ver = results_dict['response']['result']['system']['sw-version']
+        cf.post_upgrade_csv(hostname=fw_hostname, ha_state=ha_state, version=soft_ver)
+
     except Exception as e:
         print(e)
+        #raise self.retry(exc=e, countdown=30)
 
 
 def conn_scan(tgt_host):
@@ -172,6 +207,9 @@ def fw_compare(check_dict):
             fw_colors.update({key: "red"})
             continue
     return fw_colors
+
+
+
 
 
 

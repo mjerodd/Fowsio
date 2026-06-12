@@ -21,11 +21,14 @@ load_dotenv('.env')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+ENV_PATH = BASE_DIR / '.env'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+API_USER = os.getenv("API_USER")
+API_PASSWORD = os.getenv("API_PASSWORD")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = os.environ.get("DEBUG")
@@ -33,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 #ALLOWED_HOSTS = []
-CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = ['https://*.172.16.15.200', 'http://*.172.16.15.200' ]
 
 
 # Application definition

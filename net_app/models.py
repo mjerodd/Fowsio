@@ -41,3 +41,6 @@ class Firewall(models.Model):
             self.slug = slugify(self.model)
         super().save(*args, **kwargs)
 
+
+class FwUpgradeReport(models.Model):
+    file = models.FileField(blank=True, null=True, upload_to="not_used")
