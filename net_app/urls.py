@@ -18,4 +18,6 @@ urlpatterns = [
     path('erspanp-tool/', views.erspan_tool, name='erspan'),
     path('firewall-checklist/', views.fw_check, name='fw-check'),
     path('firewall-ha/', views.fw_ha_conf, name='fw-ha-conf'),
+    path('fw-upgrade-report/', views.list_report_files, name='list-files'),
+    path('download-report/<str:filename>/', views.download_up_report, name='download-report'),
 ]

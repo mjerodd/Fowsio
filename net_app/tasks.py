@@ -99,14 +99,14 @@ def xml_fw_upgrade(fw_ip, fw_ver):
             time.sleep(30)
         print("firewall rebooting...")
         print(cf.check_firewall_boot())
-        time.sleep(60)
+        time.sleep(120)
 
         sys_results = cf.fw_conn.op(cmd='show system info', xml=True)
         results_dict = xmltodict.parse(sys_results)
         fw_hostname = results_dict['response']['result']['system']['devicename']
         ha_state = cf.get_ha_state()
         soft_ver = results_dict['response']['result']['system']['sw-version']
-        cf.post_upgrade_csv(hostname=fw_hostname, ha_state=ha_state, version=soft_ver)
+        report = cf.post_upgrade_csv(hostname=fw_hostname, ha_state=ha_state, version=soft_ver)
 
     except Exception as e:
         print(e)

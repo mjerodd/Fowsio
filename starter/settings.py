@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 #ALLOWED_HOSTS = []
-CSRF_TRUSTED_ORIGINS = ['https://*.172.16.15.200', 'http://*.172.16.15.200' ]
+CSRF_TRUSTED_ORIGINS = ['https://*.infra.chdn.com', 'http://*.infra.chdn.com' ]
 
 
 # Application definition
@@ -143,7 +143,6 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = BASE_DIR / "static"
 
-STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

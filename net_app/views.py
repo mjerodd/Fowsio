@@ -1,9 +1,10 @@
-import jinja2
+import jinja2, os
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.conf import settings
 from .forms import NewRouterForm, NewSwitchForm, NewFirewallForm, ErspanForm, FirewallHAForm
 from .models import Switch, Router, Firewall
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
 from .forms import CoreTempForm, IntDescriptionForm, PaloForm, PaloOsUpgradeForm, CoreSwitchConfForm, IosUpgradeForm, \
     FirewallCheckForm
@@ -16,10 +17,38 @@ from .tasks import fw_upgrade, get_ints, port_scan, miko_connect, os_transfer, b
 import zipfile
 import concurrent.futures as cf
 from io import BytesIO
+from django.contrib.auth.decorators import login_required
+
+# Create your views here
+
+DOWNLOAD_DIR = os.path.join(settings.BASE_DIR, 'fw_post_upgrade')
+
+@login_required(login_url='login')
+def list_report_files(request):
+    """Lists all files available in the target directory."""
+    if not os.path.exists(DOWNLOAD_DIR):
+        os.makedirs(DOWNLOAD_DIR)  # Safeguard if folder doesn't exist
+
+    # Filter out hidden files and directories
+    reports = [f for f in os.listdir(DOWNLOAD_DIR) if os.path.isfile(os.path.join(DOWNLOAD_DIR, f))]
+    return render(request, 'net_app/post_upgrade_download.html', {'reports': reports})
 
 
-# Create your views here.
+@login_required(login_url='login')
+def download_up_report(request, filename):
+    """Serves the requested file securely as a download attachment."""
+    # Prevent Directory Traversal Vulnerabilities (../ attacks)
 
+    file_path = os.path.join(DOWNLOAD_DIR, filename)
+
+    if not os.path.exists(file_path):
+        raise Http404("File does not exist")
+
+    # Open the file in read-binary mode and serve it
+    response = FileResponse(open(file_path, 'rb'), as_attachment=True)
+    return response
+
+@login_required(login_url='login')
 def switches(request):
     form = NewSwitchForm()
     switches = Switch.objects.all()
@@ -32,6 +61,7 @@ def switches(request):
     return render(request, "net_app/switches.html", context=context)
 
 
+@login_required(login_url='login')
 def switch_edit(request, slug):
     switch = Switch.objects.get(slug=slug)
     form = NewSwitchForm(request.POST or None, request.FILES or None, instance=switch)
@@ -43,6 +73,7 @@ def switch_edit(request, slug):
     return render(request, 'net_app/switch_edit.html', {'form': form, 'switch': switch})
 
 
+@login_required(login_url='login')
 def routers(request):
     form = NewSwitchForm()
     routers = Router.objects.all()
@@ -55,6 +86,7 @@ def routers(request):
     return render(request, "net_app/switches.html", context=context)
 
 
+@login_required(login_url='login')
 def router_edit(request, slug):
     router = Switch.objects.get(slug=slug)
     form = NewSwitchForm(request.POST or None, request.FILES or None, instance=router)
@@ -66,6 +98,7 @@ def router_edit(request, slug):
     return render(request, 'net_app/switch_edit.html', {'form': form, 'router': router})
 
 
+@login_required(login_url='login')
 def download_switch_templ(request, slug):
     switch = get_object_or_404(Switch, slug=slug)
     file_path = switch.template.path
@@ -76,6 +109,7 @@ def download_switch_templ(request, slug):
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
     return response
 
+@login_required(login_url='login')
 def post_upgrade_report(request):
 
     routers = Router.objects.all()
@@ -88,13 +122,14 @@ def post_upgrade_report(request):
 def index(request):
     return render(request, "net_app/index.html")
 
-
+@login_required(login_url='login')
 def os_trans(task):
     file_name = task.host.get('img')
     result = task.run(task=netmiko_file_transfer, source_file=file_name, dest_file=file_name, direction='put')
     return result
 
 
+@login_required(login_url='login')
 def send_to_switch(task):
     nr = InitNornir(
         config_file="/app/net_app/yaml_files/config.yaml")
@@ -114,6 +149,7 @@ def send_to_switch(task):
         print(f"File Transfer for {task.host} Complete")
 
 
+@login_required(login_url='login')
 def nex_conf(task):
     template = task.run(task=template_file, template="nx_template.j2", path="/app/net_app/yaml_files/config.yaml")
     task.host["stage_conf"] = template.result
@@ -125,6 +161,7 @@ def nex_conf(task):
     task.run(task=netmiko_send_config, read_timeout=90, config_file=f"{task.host}_conf.txt")
 
 
+@login_required(login_url='login')
 def core_ip(subnet):
     ip_add = subnet
     split_ip = ip_add.split(".")
@@ -138,6 +175,7 @@ def core_ip(subnet):
     return [core1_ip, core2_ip, core_gw, vpc_oct]
 
 
+@login_required(login_url='login')
 def core_temp(request):
     if request.method == 'POST':
 
@@ -201,6 +239,7 @@ def thank_you(request):
     return render(request, "net_app/thanks.html")
 
 
+@login_required(login_url='login')
 def int_descriptions(request):
     if request.method == 'POST':
         form = IntDescriptionForm(request.POST)
@@ -218,6 +257,7 @@ def int_descriptions(request):
     return render(request, "net_app/int_description.html", {"form": form})
 
 
+@login_required(login_url='login')
 def ios_up(request):
     if request.method == 'POST':
         print('This is a post')
@@ -255,6 +295,7 @@ def reboot(task):
     task.run(task=netmiko_send_command, command_string='\n')
 
 
+@login_required(login_url='login')
 def ini_fw_auto(request):
     if request.method == 'POST':
         form = PaloForm(request.POST)
@@ -270,11 +311,13 @@ def ini_fw_auto(request):
         context = {'form': form}
     return render(request, "net_app/firewall_auto.html", context=context)
 
+
 def upgrade_church_fw(firewall_ip, firewall_version):
     church_fw = ChurchFirewall(firewall_ip)
     church_fw.os_update(firewall_version)
 
 
+@login_required(login_url='login')
 def fw_os_auto(request):
     if request.method == 'POST':
         form = PaloOsUpgradeForm(request.POST)
@@ -304,6 +347,7 @@ def fw_os_auto(request):
         context = {'form': form, 'task_id': None}
     return render(request, "net_app/fw_os_auto.html", context=context)
 
+@login_required(login_url='login')
 def xml_fw_os_auto(request):
     if request.method == 'POST':
         form = PaloOsUpgradeForm(request.POST)
@@ -343,6 +387,7 @@ def fw_tools(request):
     return render(request, "net_app/fw_tools.html")
 
 
+@login_required(login_url='login')
 def erspan_tool(request):
     if request.method == 'POST':
         form = ErspanForm(request.POST)
@@ -366,6 +411,7 @@ def erspan_tool(request):
     return render(request, "net_app/erspan.html", context=context)
 
 
+@login_required(login_url='login')
 def fw_check(request):
     if request.method == 'POST':
         form = FirewallCheckForm(request.POST)
@@ -435,6 +481,7 @@ def fw_check(request):
     return render(request, "net_app/fw_check.html", context=context)
 
 
+@login_required(login_url='login')
 def fw_ha_conf(request):
     if request.method == 'POST':
         form = FirewallHAForm(request.POST)
@@ -453,3 +500,4 @@ def fw_ha_conf(request):
         form = FirewallHAForm()
         context = {"form": form}
     return render(request, "net_app/ha-conf.html", context=context)
+

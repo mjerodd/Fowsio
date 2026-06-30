@@ -806,10 +806,12 @@ class ChurchFirewall:
         return ha_state
 
     def post_upgrade_csv(self,hostname, ha_state, version):
-        with open(f"upgrade_job_{datetime.datetime.now()}", 'w', newline='') as cv:
+        with open(f"fw_post_upgrade/upgrade_job_{hostname}_{datetime.datetime.now()}.csv", 'w+', newline='') as cv:
             writer = csv.writer(cv)
 
             (writer.writerow(['Hostname', 'FW IP', 'HA State', 'Software Version']))
 
             writer.writerow(
                 [hostname, self.fw_host, ha_state, version])
+            file = cv.readlines()
+        return file
